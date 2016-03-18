@@ -14,10 +14,15 @@ yt=data.y5;
 %}
 tic
 [y, x] = libsvmread(datafiletrain);
-[yt, xt] = libsvmread(datatest);
+disp('data load');
+
+[yt, xt] = libsvmread(datatest);c
+disp('data load');
 model = train(y, sparse(x), '-c 1');
+disp('data load');
 % test the training data
 [predict_label, accuracy, dec_values] = predict(yt, sparse(xt), model);
+disp('data load');
 toc
 end
 
