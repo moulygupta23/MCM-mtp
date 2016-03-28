@@ -6,7 +6,7 @@ C=1e0;
 c1=1e0;
 c2=1e0;
 %{
-files='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1';
+files='data1.mat';
 data=load(files);
 xt=data.x5;
 yt=data.y5;
@@ -21,10 +21,15 @@ xs(xs==0)=1;
 x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
 xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
 %}
-filetr='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.train';
-filete='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.test';
-
-[m,n]=size(x);
+%%{
+filetr='sparsedata1.train';
+filete='sparsedata1.test';
+%filetr='/home/mouly/Documents/Data_ML/news20b_sparse_1.train';
+%filete='/home/mouly/Documents/Data_ML/news20b_sparse_1.test';
+[y,x,n]=ReadSparse(filetr);
+[yt,xt,nt]=ReadSparse(filete);
+%}
+m=size(x,1);
 o= ones(1,m);
 %{
 %------------------------------------------------------
@@ -108,7 +113,7 @@ pred1=sign(xt*w2primal+b2primal);
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
 %}
-%%{
+%{
 %Q=x*x';
 % ---------------------------------------------------------------------------
 % max 1/2*sumationij (betai-alphai)*yi*xi*xj'*yj*(betaj-alphaj) + sum(betai)
@@ -202,8 +207,11 @@ accuracy = correct*100/length(yt)
 sum(a)
 %}
 %}
-x=[x,ones(m,1)];
-xt=[xt,ones(size(xt,1),1)];
+isSparse=true;
+if ~isSparse
+    x=[x,ones(m,1)];
+    xt=[xt,ones(size(xt,1),1)];
+end
 converge=false;
 a1=ones(m,1)/m;
 a1old=a1;
@@ -254,30 +262,30 @@ toc
 %}
 %%{
 %lambda rule increase in labda decrease the sum
-lambda=4.2;
-isSparse=true;
+lambda=3;
+
 if isSparse
     w=zeros(1,n+1);
-    
     for i=1:m
-        indSize=n+1;
-        ind=linspace(1,indSize,indSize);
+        indSize=length(x(i).ind);
+        ind=x(i).ind;
         for j=1:indSize
-            w(ind(j))=w(ind(j))+y(i)*(b1(i)-a1(i))*x(i,j);
+            w(ind(j))=w(ind(j))+y(i)*(b1(i)-a1(i))*x(i).value(j);
         end
     end
+    w(n+1)=sum(y.*(b1-a1));
 else
     w=(y.*(b1-a1))'*x;
 end
 j=0;
 tic
 if isSparse
-    ind=linspace(1,n+1,n+1);
+    %ind=linspace(1,n+1,n+1);
     while ~converge
         changedvariable=0;
         for i=1:m
-            qii=calculateqii(x(i,:),ind);
-            [Gb,Ga]=calculateGradient(y(i),x(i,:),w',lambda,ind);
+            qii=calculateqii(x(i).value,x(i).ind);
+            [Gb,Ga]=calculateGradient(y(i),x(i).value,w',lambda,x(i).ind);
     %         if a1(i)==0
     %             pga=min(Ga,0);
     %         elseif a1(i)==c2;
@@ -309,7 +317,7 @@ if isSparse
                 if abs(b1(i)-b1old(i))>=1e-5
                     changedvariable=changedvariable+1;
                 end
-                w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i,:),ind,n+1);
+                w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i).value,x(i).ind,n+1);
     %         end    
         end
         %alphas=[a1old,a1];
@@ -368,11 +376,11 @@ else
 end
 toc
 %%}
-wcd=w;
+wcd=w
 %d1
 %a1
 sumOfAlpha=sum(a1)
-pred1=sign(xt*w');
+pred1=calculatePrediction(xt,w,size(xt,1));
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
 nsv=nnz(b1-a1)
@@ -443,6 +451,20 @@ end
 wc=w
 %}
 end
+function [pred]=calculatePrediction(xt,w,m)
+pred=zeros(m,1);
+nw=length(w);
+for i=1:m
+    predv=w(nw);
+    n=length(xt(i).ind);
+    for j=1:n
+        predv=predv+xt(i).value(j)*w(xt(i).ind(j));
+    end
+    pred(i)=sign(predv);
+end
+%sign(xt*w');
+end
+
 function [qii]=calculateqii(x,ind)
     qii=0;
     n=length(ind);
@@ -456,6 +478,7 @@ function [Gb, Ga] = calculateGradient(y,x,w,lambda,ind)
     for i=1:n
         Gb=Gb+y*x(i)*w(ind(i));
     end
+    Gb=Gb+y*w(size(w,1));
     Gb=Gb-1;
     Ga=lambda-Gb-1;
 end
@@ -467,6 +490,6 @@ function [delw]=CalculateChangesinW(delb,dela,y,x,ind,n)
     for j=1:indSize
         delw(ind(j))=delw(ind(j))+(delb-dela)*y*x(j);
     end
-
+    delw(n)=delw(n)+(delb-dela)*y;
     %(((b1(i)-b1old(i)-a1(i)+a1old(i))*y(i))*x(i,:))
 end
