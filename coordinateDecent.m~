@@ -24,6 +24,9 @@ xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
 filetr='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.train';
 filete='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.test';
 
+data=textread(filetr,'','delimiter',' :');
+y=data(:,1);
+
 [m,n]=size(x);
 o= ones(1,m);
 %{
