@@ -17,17 +17,25 @@ while ischar(str)
     splitStr = regexp(str,rexpression,'split');
     n=length(splitStr);
     y=[y;str2num(splitStr{1})];
-    flag=0;
-    for i=2:n
-        if flag==0
-            tempind=[tempind,str2num(splitStr{i})];
-            flag=1;
-        else
-            tempx=[tempx,str2num(splitStr{i})];
-            flag=0;
+    if  strcmp(splitStr{n},'')==0
+        flag=0;
+        for i=2:n
+            if flag==0
+                ind=str2num(splitStr{i});
+                tempind=[tempind,ind];
+                flag=1;
+            else
+                tempx=[tempx,str2num(splitStr{i})];
+                flag=0;
+            end
+        end
+        %ind
+        %elem
+        elem=max(elem,ind);
+        if isempty(elem)
+            input('working?');
         end
     end
-    elem=max(elem,length(tempx));
     s.value=tempx;
     s.ind=tempind;
     %x=[x;tempx];
@@ -35,7 +43,9 @@ while ischar(str)
     r=[r;s];
     str = fgetl(fid);
 end
+elem
 fclose(fid);
-
+disp('reading complete');
+input('press enter');
 end
 

@@ -22,12 +22,13 @@ x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
 xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
 %}
 %%{
-filetr='sparsedata1.train';
-filete='sparsedata1.test';
-%filetr='/home/mouly/Documents/Data_ML/news20b_sparse_1.train';
-%filete='/home/mouly/Documents/Data_ML/news20b_sparse_1.test';
+%filetr='sparsedata1.train';
+%filete='sparsedata1.test';
+filetr='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.train';
+filete='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.test';
 [y,x,n]=ReadSparse(filetr);
 [yt,xt,nt]=ReadSparse(filete);
+n
 %}
 m=size(x,1);
 o= ones(1,m);
@@ -262,15 +263,17 @@ toc
 %}
 %%{
 %lambda rule increase in labda decrease the sum
-lambda=3;
+lambda=1.00025;
 
 if isSparse
     w=zeros(1,n+1);
     for i=1:m
         indSize=length(x(i).ind);
-        ind=x(i).ind;
-        for j=1:indSize
-            w(ind(j))=w(ind(j))+y(i)*(b1(i)-a1(i))*x(i).value(j);
+        if indSize~=0
+            ind=x(i).ind;
+            for j=1:indSize
+                w(ind(j))=w(ind(j))+y(i)*(b1(i)-a1(i))*x(i).value(j);
+            end
         end
     end
     w(n+1)=sum(y.*(b1-a1));
@@ -284,6 +287,7 @@ if isSparse
     while ~converge
         changedvariable=0;
         for i=1:m
+            if isempty(x(i).ind)==0
             qii=calculateqii(x(i).value,x(i).ind);
             [Gb,Ga]=calculateGradient(y(i),x(i).value,w',lambda,x(i).ind);
     %         if a1(i)==0
@@ -318,7 +322,8 @@ if isSparse
                     changedvariable=changedvariable+1;
                 end
                 w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i).value,x(i).ind,n+1);
-    %         end    
+    %         end 
+            end
         end
         %alphas=[a1old,a1];
         %betas=[b1old,b1];
@@ -466,19 +471,20 @@ end
 end
 
 function [qii]=calculateqii(x,ind)
-    qii=0;
+    qii=1;
     n=length(ind);
     for i=1:n
         qii=qii+x(i)*x(i);
     end
 end
+
 function [Gb, Ga] = calculateGradient(y,x,w,lambda,ind)
-    Gb=0;
+    Gb=y*w(length(w));
     n=length(ind);
     for i=1:n
         Gb=Gb+y*x(i)*w(ind(i));
     end
-    Gb=Gb+y*w(size(w,1));
+    
     Gb=Gb-1;
     Ga=lambda-Gb-1;
 end
@@ -488,8 +494,9 @@ function [delw]=CalculateChangesinW(delb,dela,y,x,ind,n)
     indSize=length(ind);
 
     for j=1:indSize
-        delw(ind(j))=delw(ind(j))+(delb-dela)*y*x(j);
+        delw(ind(j))=(delb-dela)*y*x(j);
     end
-    delw(n)=delw(n)+(delb-dela)*y;
+    
+    delw(n)=(delb-dela)*y;
     %(((b1(i)-b1old(i)-a1(i)+a1old(i))*y(i))*x(i,:))
 end
