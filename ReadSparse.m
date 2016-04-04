@@ -46,6 +46,6 @@ end
 elem
 fclose(fid);
 disp('reading complete');
-input('press enter');
+%input('press enter');
 end
 

@@ -5,35 +5,33 @@ function [] = coordinateDecent%(x,y,xt,yt)
 C=1e0;
 c1=1e0;
 c2=1e0;
-isSparse=true;
+%{
+files='data1.mat';
+data=load(files);
+xt=data.x5;
+yt=data.y5;
 
-if ~isSparse
-    files='data1.mat';
-    data=load(files);
-    xt=data.x5;
-    yt=data.y5;
+x=[data.x1;data.x2;data.x3;data.x4];
+y=[data.y1;data.y2;data.y3;data.y4];
 
-    x=[data.x1;data.x2;data.x3;data.x4];
-    y=[data.y1;data.y2;data.y3;data.y4];
+xm = mean(x);
+xs = std(x);
+xs(xs==0)=1;
 
-    xm = mean(x);
-    xs = std(x);
-    xs(xs==0)=1;
-
-    x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
-    xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
-else
-    %%{
-    %filetr='sparsedata1.train';
-    %filete='sparsedata1.test';
-    filetr='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.train';
-    filete='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.test';
-    [y,x,n]=ReadSparse(filetr);
-    [yt,xt,nt]=ReadSparse(filete);
-    n=max(n,nt);
-end
-
+x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
+xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
+%}
+%%{
+%filetr='sparsedata1.train';
+%filete='sparsedata1.test';
+filetr='/home/mouly/Documents/mtp/Data_ML/mnist38_norm_svm_full_1.train';
+filete='/home/mouly/Documents/mtp/Data_ML/mnist38_norm_svm_full_1.test';
+[y,x,n]=ReadSparse(filetr);
+[yt,xt,nt]=ReadSparse(filete);
+n
+%}
 m=size(x,1);
+o= ones(1,m);
 %{
 %------------------------------------------------------
 % min h + c1*sum(qi) + c2*sum(etai)
@@ -210,7 +208,7 @@ accuracy = correct*100/length(yt)
 sum(a)
 %}
 %}
-
+isSparse=true;
 if ~isSparse
     x=[x,ones(m,1)];
     xt=[xt,ones(size(xt,1),1)];
@@ -219,7 +217,7 @@ converge=false;
 a1=ones(m,1)/m;
 a1old=a1;
 
-MAXITR=100;
+MAXITR=200;
 
 b1=zeros(m,1);
 b1old=b1;
@@ -264,8 +262,8 @@ disp('coordinate descent');
 toc
 %}
 %%{
-%lambda rule increase in lambda decrease the sum
-lambda=1;
+%lambda rule increase in labda decrease the sum
+lambda=1.00025;
 
 if isSparse
     w=zeros(1,n+1);
@@ -333,9 +331,7 @@ if isSparse
                     end
                 end 
                 
-                if pga~=0 || pgb ~= 0
-                    w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i).value,x(i).ind,n+1);
-                end
+                if pgb 
             end
         end
         %alphas=[a1old,a1];
@@ -394,7 +390,7 @@ else
 end
 toc
 %%}
-%wcd=w
+wcd=w
 %d1
 %a1
 sumOfAlpha=sum(a1)
@@ -402,7 +398,6 @@ pred1=calculatePrediction(xt,w,size(xt,1));
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
 nsv=nnz(b1-a1)
-margin=1/norm(w)
 %}
 %% svm implementation------------------------------------------------------
 %{
@@ -473,7 +468,6 @@ end
 function [pred]=calculatePrediction(xt,w,m)
 pred=zeros(m,1);
 nw=length(w);
-
 for i=1:m
     predv=w(nw);
     n=length(xt(i).ind);
