@@ -274,7 +274,7 @@ if isSparse
         if indSize~=0
             ind=x(i).ind;
             for j=1:indSize
-                w(ind(j))=w(ind(j))+y(i)*(b1(i)-a1(i))*x(i).value(j);
+                w(ind(j)) = w(ind(j)) + y(i)*(b1(i)-a1(i))*x(i).value(j);
             end
         end
     end
@@ -292,11 +292,11 @@ if isSparse
             if isempty(x(i).ind)==0
                 qii=calculateqii(x(i).value,x(i).ind);
                 [Gb,Ga]=calculateGradient(y(i),x(i).value,w',lambda,x(i).ind);
-                pga=1;
-                pgb=1;
-                if Ga < 1e-5
-                    pga=0;
-                end
+%                 pga=1;
+%                 pgb=1;
+%                 if Ga < 1e-5
+%                     pga=0;
+%                 end
         %         if a1(i)==0
         %             pga=min(Ga,0);
         %         elseif a1(i)==c2;
@@ -304,17 +304,17 @@ if isSparse
         %         else
         %             pga=Ga;
         %         end
-                if pga~=0
+%                 if pga~=0
                     t=a1(i);
                     a1old(i,:)=t;
                     a1(i)=min(max(a1(i)-Ga/qii,0),c2);
-                    if abs(a1(i)-a1old(i))>=1e-5
+                    if abs(a1(i)-a1old(i))>=1e-8
                         changedvariable=changedvariable+1;
                     end
-                end  
-                if Gb < 1e-5
-                    pgb=0;
-                end
+%                 end  
+%                 if Gb < 1e-5
+%                     pgb=0;
+%                 end
         %         
         %         if d1(i)==-a1(i)
         %             pgb=min(Gd,0);
@@ -323,19 +323,19 @@ if isSparse
         %         else
         %             pgb=Gd;
         %         end
-                if pgb~=0
+%                 if pgb~=0
                     t=b1(i);
                     b1old(i)=t;
                     %b1(i)-Gb(i)/Q(i,i)
                     b1(i)=min(max(b1(i)-Gb/qii,0),c1);
-                    if abs(b1(i)-b1old(i))>=1e-5
+                    if abs(b1(i)-b1old(i))>=1e-8
                         changedvariable=changedvariable+1;
                     end
-                end 
+%                 end 
                 
-                if pga~=0 || pgb ~= 0
+%                 if pga~=0 || pgb ~= 0
                     w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i).value,x(i).ind,n+1);
-                end
+%                 end
             end
         end
         %alphas=[a1old,a1];
@@ -470,34 +470,35 @@ end
 wc=w
 %}
 end
-function [pred]=calculatePrediction(xt,w,m)
-pred=zeros(m,1);
-nw=length(w);
 
-for i=1:m
-    predv=w(nw);
-    n=length(xt(i).ind);
-    for j=1:n
-        predv=predv+xt(i).value(j)*w(xt(i).ind(j));
+function [pred]=calculatePrediction(xt,w,m)
+    pred=zeros(m,1);
+    nw=length(w);
+
+    for i=1:m
+        predv=w(nw);
+        n=length(xt(i).ind);
+        for j=1:n
+            predv = predv + xt(i).value(j)*w(xt(i).ind(j));
+        end
+        pred(i)=sign(predv);
     end
-    pred(i)=sign(predv);
-end
-%sign(xt*w');
+    %sign(xt*w');
 end
 
 function [qii]=calculateqii(x,ind)
     qii=1;
     n=length(ind);
     for i=1:n
-        qii=qii+x(i)*x(i);
+        qii = qii + x(i)*x(i);
     end
 end
 
 function [Gb, Ga] = calculateGradient(y,x,w,lambda,ind)
     Gb=y*w(length(w));
     n=length(ind);
-    for i=1:n
-        Gb=Gb+y*x(i)*w(ind(i));
+    for k=1:n
+        Gb = Gb + y*x(k)*w(ind(k));
     end
     
     Gb=Gb-1;
