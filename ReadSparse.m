@@ -11,11 +11,12 @@ value = [];
 s = struct(field1,value,field2,value);
 elem=0;
 while ischar(str)
+    %str
     tempx=[];
     tempind=[];
     rexpression = '[\s\:]';
-    splitStr = regexp(str,rexpression,'split');
-    n=length(splitStr);
+    splitStr = regexp(strtrim(str),rexpression,'split');
+    n=length(splitStr)
     y=[y;str2num(splitStr{1})];
     if  strcmp(splitStr{n},'')==0
         flag=0;
@@ -46,6 +47,6 @@ end
 elem
 fclose(fid);
 disp('reading complete');
-input('press enter');
+%input('press enter');
 end
 
