@@ -16,7 +16,7 @@ while ischar(str)
     tempind=[];
     rexpression = '[\s\:]';
     splitStr = regexp(strtrim(str),rexpression,'split');
-    n=length(splitStr)
+    n=length(splitStr);
     y=[y;str2num(splitStr{1})];
     if  strcmp(splitStr{n},'')==0
         flag=0;

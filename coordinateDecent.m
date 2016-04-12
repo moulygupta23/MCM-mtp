@@ -1,4 +1,4 @@
-function [] = coordinateDecent%(x,y,xt,yt)
+function [sumOfAlpha] = coordinateDecent(x,y,xt,yt,n,lambda)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -22,12 +22,12 @@ if ~isSparse
 
     x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
     xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
-else
+%else
     %%{
     %filetr='sparsedata1.train';
     %filete='sparsedata1.test';
-    filetr='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.train';
-    filete='/home/mouly/Documents/mtp/Data_ML/news20b_sparse_1.test';
+    filetr='/home/mouly/Documents/mtp/Data_ML/mnist38_norm_svm_full_1.train';
+    filete='/home/mouly/Documents/mtp/Data_ML/mnist38_norm_svm_full_1.test';
     [y,x,n]=ReadSparse(filetr);
     [yt,xt,nt]=ReadSparse(filete);
     n=max(n,nt);
@@ -219,7 +219,7 @@ converge=false;
 a1=ones(m,1)/m;
 a1old=a1;
 
-MAXITR=100;
+MAXITR=400;
 
 b1=zeros(m,1);
 b1old=b1;
@@ -265,20 +265,21 @@ toc
 %}
 %%{
 %lambda rule increase in lambda decrease the sum
-lambda=1;
+% lambda=17;
 
 if isSparse
     w=zeros(1,n+1);
-    for i=1:m
-        indSize=length(x(i).ind);
-        if indSize~=0
-            ind=x(i).ind;
-            for j=1:indSize
-                w(ind(j)) = w(ind(j)) + y(i)*(b1(i)-a1(i))*x(i).value(j);
-            end
-        end
-    end
-    w(n+1)=sum(y.*(b1-a1));
+    %w=(y.*(b1-a1))'*x;
+%     for i=1:m
+%         indSize=length(x(i).ind);
+%         if indSize~=0
+%             ind=x(i).ind;
+%             for j=1:indSize
+%                 w(ind(j)) = w(ind(j)) + y(i)*(b1(i)-a1(i))*x(i).value(j);
+%             end
+%         end
+%     end
+%     w(n+1)=sum(y.*(b1-a1));
 else
     w=(y.*(b1-a1))'*x;
 end
@@ -292,50 +293,52 @@ if isSparse
             if isempty(x(i).ind)==0
                 qii=calculateqii(x(i).value,x(i).ind);
                 [Gb,Ga]=calculateGradient(y(i),x(i).value,w',lambda,x(i).ind);
-%                 pga=1;
-%                 pgb=1;
-%                 if Ga < 1e-5
-%                     pga=0;
-%                 end
-        %         if a1(i)==0
-        %             pga=min(Ga,0);
-        %         elseif a1(i)==c2;
-        %             pga=max(Ga,0);
-        %         else
-        %             pga=Ga;
-        %         end
-%                 if pga~=0
+                pga=1;
+                pgb=1;
+                 if abs(Ga) < 1e-5
+                    pga=0;
+                 end
+                 if a1(i) <= 1e-6 && -Ga==min(-Ga,0)
+                    pga=0;
+                elseif a1(i) >= c2-1e-5 && Ga==min(Ga,0)
+                    pga=0;
+%                 else
+%                     pga=Ga;
+                end
+                if pga~=0
                     t=a1(i);
                     a1old(i,:)=t;
                     a1(i)=min(max(a1(i)-Ga/qii,0),c2);
-                    if abs(a1(i)-a1old(i))>=1e-8
+                    if abs(a1(i)-a1old(i))>=1e-5
                         changedvariable=changedvariable+1;
                     end
-%                 end  
-%                 if Gb < 1e-5
-%                     pgb=0;
-%                 end
-        %         
-        %         if d1(i)==-a1(i)
-        %             pgb=min(Gd,0);
-        %         elseif d1(i)==c1-a1(i)
-        %             pgb=max(Gd,0);
-        %         else
-        %             pgb=Gd;
-        %         end
-%                 if pgb~=0
+                end  
+                if abs(Gb) < 1e-5
+                    pgb=0;
+                end
+                if b1(i) <=1e-6 && -Gb==min(-Gb,0)
+                    pgb=0;
+                elseif b1(i) >= c1-1e-5 && Gb==min(Gb,0)
+                    pgb=0;
+%         %         elseif a1(i)==c2;
+%         %             pga=max(Ga,0);
+%         %         else
+%         %             pga=Ga;
+                end
+        
+                if pgb~=0
                     t=b1(i);
                     b1old(i)=t;
                     %b1(i)-Gb(i)/Q(i,i)
                     b1(i)=min(max(b1(i)-Gb/qii,0),c1);
-                    if abs(b1(i)-b1old(i))>=1e-8
+                    if abs(b1(i)-b1old(i))>=1e-5
                         changedvariable=changedvariable+1;
                     end
-%                 end 
+                end 
                 
-%                 if pga~=0 || pgb ~= 0
+                if pga~=0 || pgb ~= 0
                     w=w+CalculateChangesinW(b1(i)-b1old(i),a1(i)-a1old(i),y(i),x(i).value,x(i).ind,n+1);
-%                 end
+                end
             end
         end
         %alphas=[a1old,a1];
