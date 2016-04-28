@@ -1,10 +1,10 @@
 %function [timemat] = coordinateDecent1%(x,y,xt,yt,n,lambda)
 %this function reads file with the help of libsvmread function
 tic
-lambda=11.5;
+lambda=15.5;
 C=1e0;
-c1=10e0;
-c2=10e0;
+c1=5e0;
+c2=5e0;
 isSparse=true;
 
 if ~isSparse
@@ -27,8 +27,8 @@ else
 %     datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
 %     datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';
 
-    datafiletrain = '/home/mouly/Desktop/Mouly/Data_ML/real-sim_sparse_1.train';
-    datafiletest = '/home/mouly/Desktop/Mouly/Data_ML/real-sim_sparse_1.test';
+    datafiletrain = '/home/mouly/Desktop/Mouly/Data_ML/kddb_unnorm_svm_1.train';
+    datafiletest = '/home/mouly/Desktop/Mouly/Data_ML/kddb_unnorm_svm_1.test';
     [y, x] = libsvmread(datafiletrain);
     disp('train data loaded into memory');
 
@@ -45,17 +45,15 @@ xt=[xt,ones(size(xt,1),1)];
 
 n=size(x,2);
 nt=size(xt,2);
-%[              1;  2;                 3;       4;           5;          6;
-%[initailaization;DCD;for loop iteration;qii copy;alpha update;beta update;
-%       7;         8;             9]
-%w update;prediction;gredient update]
+%[1;2;               3;       4;           5;          6;       7;8;             9]
+%[;;for loop iteration;qii copy;alpha update;beta update;w update;;gredient update]
 timemat=zeros(9,1);
 start=cputime;
 converge=false;
 a1=ones(m,1)/m;
 a1old=a1;
 
-MAXITR=400;
+MAXITR=300;
 
 b1=zeros(m,1);
 b1old=b1;
