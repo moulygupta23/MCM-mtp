@@ -8,6 +8,7 @@
 #include <ctime>
 
 #define MAXITR 400
+#define EPS 1e-4
 
 using namespace std;
 
@@ -110,7 +111,7 @@ public:
         //printModel(tr.m,tr.n);
         // int u;
         // cin>>u;
-        lambda=23.5f;
+        lambda=1.0f;
         c1=1.0f;
         c2=1.0f;
         cout<<"initialzation done\n";
@@ -203,6 +204,150 @@ public:
 		cout<<"training complete\n\ntime for training : "<<time_spent<<"sec"<<endl;
     }
 
+    void trainWithShrinking(Data tr){
+    	vl seq=initialzation(tr);
+    	clock_t begin, end;
+		double time_spent;
+
+		begin = clock();
+		float inf = std::numeric_limits<float>::infinity();
+ 		float maxga1=inf,maxgb1=inf,minga1=-inf,mingb1=-inf;
+ 		vl A=seq;
+ 		vl B=seq;
+ 		li activea=tr.m,activeb=tr.m;
+ 		li changedvariable=0;
+        float dela,delb;
+        int itr=0;
+        while(!converge){
+            changedvariable=0;
+ 			float maxga=inf,maxgb=inf,minga=-inf,mingb=-inf;
+ 			for(int k=0;k<max(activeb,activea);k++){
+ 				li i;
+ 				if(A[k]<B[k])
+ 					i=A[k];
+ 				else
+ 					i=B[k];
+
+ 				float Gb=w0;
+ 				for(li j=0;j<tr.ind[i].size();j++)
+                    Gb+=(tr.x[i][j]*w[tr.ind[i][j]]);
+                Gb=tr.y[i]*Gb-1;
+                float Ga=lambda-Gb-1;
+                float pga=0,pgb=0;
+                // updating alpha
+                if(fabs(Ga)>1e-4)
+                    pga=Ga;
+                else if(alpha[i]<=1e-5){
+                	if(Ga < 0)
+                    	pga=Ga;
+                    if(Ga > maxga1){
+                    	A.erase(A.begin()+k);
+                    	activea--;
+                    }
+
+                } 
+                else if(alpha[i]>=c2-1e-5){
+                	if(Ga > 0)
+                		pga=Ga;
+                	if(Ga < minga1){
+                		A.erase(A.begin()+k);
+                		activea--;
+                	}
+                	
+                }  
+                else
+                    pga=Ga;
+                if(pga!=0){
+                    alphaold[i]=alpha[i];
+                    alpha[i]=min(max((alpha[i]-Ga/qii[i]),0.0f),c2);
+                    //cout<<alpha[i]<<endl;
+                    dela=alpha[i]-alphaold[i];
+                    if(fabs(dela)>=1e-4)
+                        changedvariable++;
+                }
+
+                // updating beta
+                if(fabs(Gb)>1e-4)
+                    pgb=Gb;
+                else if(beta[i]<=1e-5){
+                	if(Gb < 0)
+                		pgb=Gb;
+                	if(Gb > maxgb1){
+                		B.erase(B.begin()+k);
+                		activeb--;
+                	}
+                } 
+                else if(beta[i]>=c1-1e-5){
+                	if(Gb > 0)
+                    	pgb=Gb;
+                    if(Gb < mingb1){
+                    	B.erase(B.begin()+k);
+                		activeb--;
+                    }
+                } 
+                else
+                    pgb=Gb;
+                if(pgb!=0){
+                    betaold[i]=beta[i];
+                    beta[i]=min(max((beta[i]-Gb/qii[i]),0.0f),c1);
+                   	//cout<<beta[i]<<endl;
+                    delb=beta[i]-betaold[i];
+                    if(fabs(delb)>=1e-4)
+                        changedvariable++;
+                }
+
+                //updating w
+                if(pga!=0||pgb!=0){
+                    for(li j=0;j<tr.ind[i].size();j++)
+                        w[tr.ind[i][j]]+=(tr.y[i]*(delb-dela)*tr.x[i][j]);
+                    w0+=(delb-dela)*tr.y[i];
+           //          for(li i=0;i<tr.n;i++){
+			        //     cout<<w[i]<<" ";
+			        // }
+			        // cout<<w0<<endl;
+                }
+                maxga=max(pga,maxga);
+                maxgb=max(pgb,maxgb);
+                minga=min(pga,minga);
+                mingb=min(pgb,mingb);
+
+            }
+            itr++;
+            cout<<itr;
+ 			if(maxga-minga < EPS && maxgb-mingb < EPS || itr==MAXITR){
+ 				if(activea==tr.m&&activeb==tr.m||itr==MAXITR)
+ 					converge=true;
+ 				else{
+ 					A=seq;
+ 					B=seq;
+ 					maxga=inf,maxgb=inf,minga=-inf,mingb=-inf;
+ 					activeb=activea=tr.m;
+ 				}
+
+ 			}
+ 			if(maxga1<=0)
+ 				maxga1=inf;
+ 			else
+ 				maxga1=maxga;
+ 			if(maxgb1<=0)
+ 				maxgb1=inf;
+ 			else
+ 				maxgb1=maxgb;
+ 			if(minga1>=0)
+ 				minga1=-inf;
+ 			else
+ 				minga1=minga;
+ 			if(mingb>=0)
+ 				mingb1=-inf;
+ 			else
+ 				mingb1=mingb;
+ 			
+ 		}
+		end = clock();
+		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		cout<<"training complete\n\ntime for training : "<<time_spent<<"sec"<<endl;
+    }
+
     void printModel(li m,li n){
     	cout<<"nummber of support vector : "<<nsv<<endl;
         //cout<<"alpha\tbeta\tqii\n";
@@ -272,7 +417,7 @@ int main(){
     Data *tt=new Data();
     //string trainfile="../../Data_ML/mnist38_norm_svm_full_1.train";//
     string trainfile="sparsedata1.train";//"kddb_unnorm_svm_1.train";
-   // string testfile="../../Data_ML/mnist38_norm_svm_full_1.test";//
+   //string testfile="../../Data_ML/mnist38_norm_svm_full_1.test";//
    string testfile="sparsedata1.test";//"kddb_unnorm_svm_1.test";
 	tr->readinput(trainfile);
     //tr->printData();
