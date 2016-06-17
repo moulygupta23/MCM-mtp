@@ -1,7 +1,7 @@
 %function [timemat] = coordinateDecent1%(x,y,xt,yt,n,lambda)
 %this function reads file with the help of libsvmread function
 tic
-lambda=1;
+lambda=1.5;
 C=1e0;
 c1=1e0;
 c2=1e0;
@@ -24,10 +24,10 @@ if ~isSparse
     xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
 else
     addpath('liblinear-2.1/matlab');
-    datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
-    datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';
-    %datafiletrain = '/home/mouly/Documents/mtp/Data_ML/real-sim_sparse_1.train';
-    %datafiletest = '/home/mouly/Documents/mtp/Data_ML/real-sim_sparse_1.test';
+%     datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
+%     datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';
+    datafiletrain = '/home/mouly/Documents/mtp/Data_ML/leukemia_norm_svm.train';
+    datafiletest = '/home/mouly/Documents/mtp/Data_ML/leukemia_norm_svm.test';
     %datafiletrain = '/home/mouly/Documents/mtp/Data_ML/colon_norm_svm.train';
     %datafiletest = '/home/mouly/Documents/mtp/Data_ML/colon_norm_svm.test';
     [y, x] = libsvmread(datafiletrain);
@@ -96,8 +96,7 @@ while ~converge
         timemat(4)=max(timemat(4),cputime-start2);
         pga=true;
         pgb=true;
-        disp(strcat('i= ',num2str(i),' ga=',num2str(Ga(i)),' gb=' , num2str(Gb(i)),' qii=',num2str(qii)));
-         if abs(Ga(i)) < 1e-4
+        if abs(Ga(i)) < 1e-4
             pga=false;
          end
          if a1(i) <= 1e-5 && Ga(i)>=0%==max(Ga(i),0)

@@ -57,7 +57,6 @@ void do_predict(FILE *input, FILE *output)
 		n=nr_feature+1;
 	else
 		n=nr_feature;
-
 	if(flag_predict_probability)
 	{
 		int *labels;

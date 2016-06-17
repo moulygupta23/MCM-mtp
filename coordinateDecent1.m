@@ -1,7 +1,7 @@
 %function [timemat] = coordinateDecent1%(x,y,xt,yt,n,lambda)
 %this function reads file with the help of libsvmread function
 tic
-lambda=11.5;
+lambda=7.7;
 C=1e0;
 c1=10e0;
 c2=10e0;
@@ -27,8 +27,8 @@ else
 %     datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
 %     datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';
 
-    datafiletrain = '/home/mouly/Desktop/Mouly/Data_ML/real-sim_sparse_1.train';
-    datafiletest = '/home/mouly/Desktop/Mouly/Data_ML/real-sim_sparse_1.test';
+    datafiletrain = '../Data_ML/a9a.train';
+    datafiletest = '../Data_ML/a9a.test';
     [y, x] = libsvmread(datafiletrain);
     disp('train data loaded into memory');
 
@@ -137,10 +137,16 @@ while ~converge
     %betas=[b1old,b1];
 
     j=j+1
-    if j==MAXITR || changedvariable == 0
+    if j==MAXITR || changedvariable == 0 
         converge=true;
         changedvariable
         j
+    end
+    if cputime-start >= 18000
+        converge=true;
+        changedvariable
+        j
+        disp('timeout :P');
     end
 end
 timemat(2)=cputime-start;
