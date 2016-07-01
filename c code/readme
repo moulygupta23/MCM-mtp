@@ -1,0 +1,3 @@
+complie.sh is used for compling and it will return the create dcd as executable.
+all options will be given when only ./dcd will be run
+-test option will give a grid search on the lambda for c=1 if you want to change it then that also has to be done manully and by default l1-loss will be considered if want it wo be l2 loss then change the option=1 to 2 in line 1327

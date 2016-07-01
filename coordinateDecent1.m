@@ -1,4 +1,4 @@
-%function [timemat] = coordinateDecent1%(x,y,xt,yt,n,lambda)
+function [nsv,accuracy] = coordinateDecent1(x,y,xt,yt,n,lambda)
 %this function reads file with the help of libsvmread function
 tic
 lambda=7.7;
@@ -22,7 +22,7 @@ if ~isSparse
 
     x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
     xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
-else
+%else
     addpath('liblinear-2.1/matlab');
 %     datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
 %     datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';

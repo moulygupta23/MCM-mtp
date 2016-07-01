@@ -16,7 +16,7 @@
 enum KernelType{LINEAR,GAUSSIAN};
 enum ModelType{L1LOSS=1,L2LOSS};
 using namespace std;
-
+double thresh=0;
 typedef int li;
 typedef vector< vector<double> > vvd;
 typedef vector< vector<li> > vvl;
@@ -423,7 +423,7 @@ public:
         return seq;
     }
 
-    void train(Data &tr){
+    double train(Data &tr){
         double *qii = new double[m];
         bool converge=false;
         double d;
@@ -454,7 +454,7 @@ public:
         int itr=0;
         while(!converge){
             changedvariable=0;
-            // random_shuffle(&seq[0], &seq[m]);
+            random_shuffle(&seq[0], &seq[m]);
             for(li k=0;k<m;k++){
                 li i=seq[k];
                 int yi=tr.y[i];
@@ -470,11 +470,11 @@ public:
                 // cout<<i+1 <<" Ga ="<<Ga<<" Gb="<<Gb<<" qii="<<qii[i]<<endl;
                 bool fa=true,fb=true;
                 // updating alpha
-                if(fabs(Ga)<1e-4)
+                if(fabs(Ga)<1e-8)
                     fa=false;
-                else if(alpha[i]<=1e-5 && Ga >= 0)
+                else if(alpha[i]<=1e-8 && Ga >= 0)
                     fa=false;
-                else if(alpha[i]>=c2-1e-5 && Ga <= 0)
+                else if(alpha[i]>=c2-1e-8 && Ga <= 0)
                     fa=false;
                 else
                     fa=true;
@@ -483,16 +483,16 @@ public:
                     alpha[i]=min(max((alpha[i]-Ga/qii[i]),0.0),c2);
                     //cout<<alpha[i]<<endl;
                     dela=alpha[i]-alphaold;
-                    if(fabs(dela)>=1e-4)
+                    if(fabs(dela)>=1e-8)
                         changedvariable++;
                 }
 
                 // updating beta
                 if(fabs(Gb)<1e-4)
                     fb=false;
-                else if(beta[i]<=1e-5 && Gb >= 0)
+                else if(beta[i]<=1e-8 && Gb >= 0)
                     fb=false;
-                else if(beta[i]>=c1-1e-5 && Gb <= 0)
+                else if(beta[i]>=c1-1e-8 && Gb <= 0)
                     fb=false;
                 else
                     fb=true;
@@ -501,7 +501,7 @@ public:
                     beta[i]=min(max((beta[i]-Gb/qii[i]),0.0),c1);
                     //cout<<beta[i]<<endl;
                     delb=beta[i]-betaold;
-                    if(fabs(delb)>=1e-4)
+                    if(fabs(delb)>=1e-8)
                         changedvariable++;
                 }
 
@@ -546,12 +546,13 @@ public:
                 nsv++;
             }
         }
-
+        end = clock();
         time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
         cout<<"training complete\n\ntime for training : "<<time_spent<<"sec"<<endl;
         
         cout<<"sum of alphas="<<sumalpha<<endl<<"nummber of support vector="<<nsv<<endl; 
         cout<<"lambda="<<lambda<<endl; 
+        return time_spent;
     }
 
     void swap(li *v,li i,li j){
@@ -746,7 +747,7 @@ public:
         end = clock();
 
         nsv=0;
-        // ofstream ofs("dcd1.out");
+        // ofstream ofs("dcd.out");
         double sumalpha=0,sumbeta=0,v=0;
         for(i=0; i<w_size; i++)
             v += w[i]*w[i];
@@ -846,7 +847,7 @@ public:
         return kij;
     }
 
-    void trainWithShrinkingKernel(Data &tr,KernelType type){
+    double trainWithShrinkingKernel(Data &tr,KernelType type){
         double *qii = new double[m];
 
         c1=1.0;
@@ -888,10 +889,10 @@ public:
             double* xi=tr.x[i];
             li *index=tr.ind[i];
             int yi=tr.y[i];
-            Q=kernel(xi,xi,index,index,LINEAR);
+            Q=kernel(xi,xi,index,index,type);
             for(li j=0;j<m;j++)
                 gbeta1[i] += (kernel(tr.x[j],xi,tr.ind[j],index,type)*tr.y[j]);
-            // gbeta1[i] = gbeta1[i]*-ai;
+            gbeta1[i] = gbeta1[i]*-ai;
             qii[i]=(Q+d);
             seq[i]=i;
             // cout<<qii[i]<<" "<<beta[i]<<" "<<alpha[i]<<endl;
@@ -900,7 +901,7 @@ public:
         cout<<"initialzation done\n";
         // int uo;
         // cin>>uo;
-        int maxitr = 200;
+        int maxitr = 500;
         while(itr < maxitr){
             
             maxga=-inf,maxgb=-inf,minga=inf,mingb=inf;
@@ -1023,7 +1024,7 @@ public:
             // cin>>uo;
             end = clock();
             time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-            if(time_spent>=12000){
+            if(time_spent>=10800){
                 cout<<"time out!!\n";
                 break;
             }
@@ -1089,9 +1090,10 @@ public:
         delete [] gbeta1;
         delete [] gbeta2;
         delete [] seq;
+        return time_spent;
     }
 
-    void predictionWithKernel(Data &tt,Data &tr,KernelType type){
+    double predictionWithKernel(Data &tt,Data &tr,KernelType type){
         
         li correct=0;
         for(li i=0;i<tt.m;i++){
@@ -1107,6 +1109,7 @@ public:
         double accuracy=correct*100.0/tt.m;
 
         cout<<"accuracy="<<accuracy<<"("<<correct<<"/"<<tt.m<<")"<<endl;
+        return accuracy;
     }
 
     void printModel(li m,li n){
@@ -1128,6 +1131,10 @@ public:
     }
 
     double prediction(Data &tt){
+        std::fstream f;
+       string::size_type sz;
+       string str="out"+to_string(thresh);
+        f.open (str, std::fstream::in | std::fstream::out | std::fstream::app);
         li pos=0,neg=0,fp=0,fn=0;
         //vector<int> pred;
         li correct=0;
@@ -1138,28 +1145,35 @@ public:
                 d += tt.x[i][j]*w[tt.ind[i][j]];
             }
             // cout<<d<<" "<<tt.y[i]<<endl;
-            if((d >= 0 && tt.y[i] == 1)){
+            if((d >= thresh && tt.y[i] == 1)){
                 pos++;
                 correct++;
+                f << "1\n";
             }
-            else if(d < 0 && tt.y[i] == -1){
+            else if(d < thresh && tt.y[i] == -1){
                 neg++;
                 correct++;
+                f << "-1\n";
             }
-            else if(d < 0 && tt.y[i] == 1)
+            else if(d < thresh && tt.y[i] == 1){
                 fn++;
-            else
+                f << "-1\n";
+            }
+            else{
+                f << "1\n";
                 fp++;
+            }
         }
         double accuracy=correct*100.0/tt.m;
 
         cout<<"accuracy="<<accuracy<<"("<<correct<<"/"<<tt.m<<")"<<endl;
-
+        // f<<"------------------\n";
         // actual > pred v
         cout<<"confusion matrix\n";
         cout<<"\tpos\tneg\n";
         cout<<"pos\t"<<pos<<"\t"<<fp<<endl;
         cout<<"neg\t"<<fn<<"\t"<<neg<<endl;
+        f.close();
         return accuracy;
     }
 };
@@ -1182,8 +1196,45 @@ void crossValidate(string file,int fold, Data &tr){
     double avgacc=0;
     int option=1;
     vector< pair<double,double> > acc;
+    vector< pair<double,pair<double,pair<double,li> > > >history;
+    int nsv=inf;
+     for(lambda=0.1;lambda<0.6;){
+        // cout<<"enter lambda or enter 0 to stop the execution: : ";
+        avgacc=0;
+        for(int i=0;i<fold;i++){
+            tr.start=trainsize[i];
+            tr.end=trainsize[i+1];
+            // cout<<tr.start<<" "<<tr.end<<" ";
+            Data tr1=Data();
+            tr1.copy(tr,false,seq);
+            tr1.sort();
+            // tr1.printData();
+            // cout<<"--------------------------\n";
+            TrainingModel model=TrainingModel(tr1.m,tr1.n);
+            model.type=option;
+            model.lambda=lambda;
+            model.trainWithShrinking(tr1);
+            Data tt=Data();
+            tt.copy(tr,true,seq);
+            avgacc+=model.prediction(tt);
+            cout<<"........................................\n\n";
+            nsv=min(model.nsv,nsv);
+            // tr1.printData();
+        }
+        cout<<"cross validation accuracy = "<<avgacc/fold<<endl;
+        // acc.push_back(make_pair(lambda,avgacc/fold));
+        history.push_back(make_pair(lambda,make_pair(avgacc/fold,make_pair(0,nsv))));
+                // sort(history.begin(), history.end() ,compare);
+        cout<<"..............................................................\nlambda\taccuracy\ttraining time\tnsv\n";
+        for(int i=0;i<history.size();i++)
+            cout<<history[i].first<<"\t"<<history[i].second.first<<"\t\t"<<history[i].second.second.first<<"\t\t"<<history[i].second.second.second<<endl;
+        if(lambda<=0.9)
+            lambda+=0.1;
+        else
+            lambda+=0.5;
+    }
     while(1){
-        cout<<"enter lambda : ";
+        cout<<"enter lambda or enter 0 to stop the execution: : ";
         cin>>lambda;
         if(lambda==0)
             break;
@@ -1199,12 +1250,14 @@ void crossValidate(string file,int fold, Data &tr){
             // cout<<"--------------------------\n";
             Data tt=Data();
             tt.copy(tr,true,seq);
-            tt.printData();
+            // tt.sort();
+            // tt.printData();
             TrainingModel model=TrainingModel(tr1.m,tr1.n);
             model.type=option;
             model.lambda=lambda;
             model.trainWithShrinking(tr1);
             avgacc+=model.prediction(tt);
+            nsv=min(model.nsv,nsv);
             cout<<"........................................\n\n";
 
             // tr1.printData();
@@ -1235,42 +1288,47 @@ void crossValidate(string file,int fold){
     random_shuffle(seq.begin(),seq.end());
     // tr.printData();
     double lambda;
-    double avgacc=0;
+    // double avgacc=0;
     int option=1;
-    // cout<<"enter lambda : ";
-    // cin>>lambda;
+    cout<<"enter lambda : ";
+    cin>>lambda;
     vector< pair<double,pair<double,pair<double,li> > > >history;
-    for(lambda=1;lambda<25;lambda+=0.5){
+    // for(lambda=0.1;lambda<25;){
         double avgacc=0;
         int nsv=inf;
-    for(int i=0;i<fold;i++){
-        tr.start=trainsize[i];
-        tr.end=trainsize[i+1];
-        // cout<<tr.start<<" "<<tr.end<<" ";
-        Data tr1=Data();
-        tr1.copy(tr,false,seq);
-        tr1.sort();
-        // tr1.printData();
-        // cout<<"--------------------------\n";
-        Data tt=Data();
-        tt.copy(tr,true,seq);
-        // tt.printData();
-        TrainingModel model=TrainingModel(tr1.m,tr1.n);
-        model.type=option;
-        model.lambda=lambda;
-        model.trainWithShrinking(tr1);
-        avgacc+=model.prediction(tt);
-        nsv=min(model.nsv,nsv);
-        cout<<"........................................\n\n";
+        for(int i=0;i<fold;i++){
+            tr.start=trainsize[i];
+            tr.end=trainsize[i+1];
+            // cout<<tr.start<<" "<<tr.end<<" ";
+            Data tr1=Data();
+            tr1.copy(tr,false,seq);
+            tr1.sort();
+            // tr1.printData();
+            // cout<<"--------------------------\n";
+            Data tt=Data();
+            tt.copy(tr,true,seq);
+            // tt.printData();
+            TrainingModel model=TrainingModel(tr1.m,tr1.n);
+            model.type=option;
+            model.lambda=lambda;
+            model.trainWithShrinking(tr1);
+            avgacc+=model.prediction(tt);
+            nsv=min(model.nsv,nsv);
+            cout<<"........................................\n\n";
 
-        // tr1.printData();
-    }
-    history.push_back(make_pair(lambda,make_pair(avgacc/fold,make_pair(0,nsv))));
+            // tr1.printData();
+        }
+        history.push_back(make_pair(lambda,make_pair(avgacc/fold,make_pair(0,nsv))));
                 // sort(history.begin(), history.end() ,compare);
         cout<<"..............................................................\nlambda\taccuracy\ttraining time\tnsv\n";
         for(int i=0;i<history.size();i++)
             cout<<history[i].first<<"\t"<<history[i].second.first<<"\t\t"<<history[i].second.second.first<<"\t\t"<<history[i].second.second.second<<endl;
-    }// cout<<"cross validation accuracy = "<<avgacc/fold<<endl;
+        if(lambda <= 0.9)
+            lambda+=0.1;
+        else
+            lambda+=0.5;
+    // cout<<"cross validation accuracy = "<<avgacc/fold<<endl;
+
 }
 
 
@@ -1286,7 +1344,7 @@ void crossValidate(string file,int fold){
 
 int main(int argc,char* argv[]){
     if(argc==1){
-        cout<<"./dcd1 [train-file] [option]\n -test [filename]\n";
+        cout<<"./dcd [train-file] [option]\n -test [filename]\n";
         cout<<" -v 0 for leave one out validation\n -v n for n fold validation\n";
         cout<<" -vt n [testfile] for setting lambda while doing n-fold validation and report test accuracy for dataset testfile\n";
         cout<<" -k 2 [testfile] for gaussian kernel\n";
@@ -1312,18 +1370,30 @@ int main(int argc,char* argv[]){
             TrainingModel model=TrainingModel(tr.m,tr.n);
             model.type=option;
             vector< pair<double,pair<double,pair<double,li> > > >history;
-            for(lambda=1;lambda<25;lambda+=0.5){
-                model.lambda=lambda;
+            model.lambda=0.3;
+            for(lambda=0.1;lambda<=30.0;){
+            // for(double i = 0;i<1;i+=0.1){
+                // tr.m=i;
+                // model.m=i;
+                // thresh=i;
+                model.lambda = lambda;
                 double timespent = model.trainWithShrinking(tr);
-                double acc=model.prediction(tt);
+                double acc = model.prediction(tt);
+                // double timespent = model.trainWithShrinking(tr);
+                // double acc=model.prediction(tt);
+
                 history.push_back(make_pair(lambda,make_pair(acc,make_pair(timespent,model.nsv))));
                 // sort(history.begin(), history.end() ,compare);
-                cout<<"..............................................................\nlambda\taccuracy\ttraining time\tnsv\n";
+                cout<<"..............................................................\nsamples\taccuracy\ttraining time\tnsv\n";
                 for(int i=0;i<history.size();i++)
                     cout<<history[i].first<<"\t"<<history[i].second.first<<"\t\t"<<history[i].second.second.first<<"\t\t"<<history[i].second.second.second<<endl;
+                if(lambda <= 0.9)
+                    lambda+=0.1;
+                else
+                    lambda+=0.5;
             }
             while(1){
-                cout<<"enter lambda : ";
+                cout<<"enter lambda or enter 0 to stop the execution: ";
                 cin>>lambda;
                 if(lambda==0)
                     break;
@@ -1358,6 +1428,7 @@ int main(int argc,char* argv[]){
             cout<<"enter lambda : ";
             cin>>lambda;
             model.lambda=lambda;
+            tr.sort();
             model.trainWithShrinking(tr);
             model.prediction(tt);
         }
@@ -1379,7 +1450,7 @@ int main(int argc,char* argv[]){
             model.predictionWithKernel(tt,tr,GAUSSIAN);
         }
         else{
-            cout<<"./dcd1 [train-file] [option]\n -test [filename]\n";
+            cout<<"./dcd [train-file] [option]\n -test [filename]\n";
             cout<<" -v 0 for leave one out validation\n -v n for n fold validation\n";
             cout<<" -vt n [testfile] for setting lambda while doing n-fold validation and report test accuracy for dataset testfile\n";
             cout<<" -k 2 [testfile] for gaussian kernel\n";

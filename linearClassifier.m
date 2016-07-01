@@ -1,4 +1,4 @@
-function [max_accuracy] = linearClassifier(option,dataset,outfile)
+function [max_accuracy] = linearClassifier(option,train,test)
 %MCM linear classifier with soft margin at option=2 and hard margin at
 %option=1 this is margin option
 %option=3 if soft margin gausian kernel 
@@ -100,17 +100,25 @@ elseif option ==2
 %     disp('fold1');
 %     x= [data.x2;data.x3;data.x5;data.x4];
 %     y = [data.y2;data.y3;data.y5;data.y4];
-addpath('liblinear-2.1/matlab');
+% addpath('liblinear-2.1/matlab');
 %     datafiletrain = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.train';
 %     datafiletest = '/home/mouly/Documents/mtp/MCM-mtp/sparsedata1.test';
 
-datafiletrain = 'D:/Mouly/Data_ML/news20b_sparse_1.train';
-datafiletest = 'D:/Mouly/Data_ML/news20b_sparse_1.test';
-[y, x] = libsvmread(datafiletrain);
-disp('train data loaded into memory');
+% datafiletrain = 'D:/Mouly/Data_ML/news20b_sparse_1.train';
+% datafiletest = 'D:/Mouly/Data_ML/news20b_sparse_1.test';
+% [y, x] = libsvmread(datafiletrain);
+% disp('train data loaded into memory');
+% 
+% [yt, xt] = libsvmread(datafiletest);
+% disp('test data loaded into memory');
+data=dlmread(train);
+x=data(:,2:size(data,2));
+y=data(:,1);
 
-[yt, xt] = libsvmread(datafiletest);
-disp('test data loaded into memory');
+data=dlmread(test);
+xt=data(:,2:size(data,2));
+yt=data(:,1);
+
 
 
     if choice1== 1

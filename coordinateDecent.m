@@ -1,28 +1,37 @@
-function [sumOfAlpha] = coordinateDecent(x,y,xt,yt,n,lambda)
+
+function [nSV,acc] = coordinateDecent(x,y,xt,yt)%,n,lambda)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
-
+acc=[];
+nSV=[];
 C=1e0;
 c1=1e0;
 c2=1e0;
 isSparse=true;
+% data=dlmread(train);
+% x=data(:,2:size(data,2));
+% y=data(:,1);
+% 
+% data=dlmread(test);
+% xt=data(:,2:size(data,2));
+% yt=data(:,1);
 
 if ~isSparse
-    files='data1.mat';
-    data=load(files);
-    xt=data.x5;
-    yt=data.y5;
-
-    x=[data.x1;data.x2;data.x3;data.x4];
-    y=[data.y1;data.y2;data.y3;data.y4];
-
-    xm = mean(x);
-    xs = std(x);
-    xs(xs==0)=1;
-
-    x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
-    xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
-%else
+%     files='data1.mat';
+%     data=load(files);
+%     xt=data.x5;
+%     yt=data.y5;
+% 
+%     x=[data.x1;data.x2;data.x3;data.x4];
+%     y=[data.y1;data.y2;data.y3;data.y4];
+% 
+%     xm = mean(x);
+%     xs = std(x);
+%     xs(xs==0)=1;
+% 
+%     x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
+%     xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
+% else
     %%{
     %filetr='sparsedata1.train';
     %filete='sparsedata1.test';
@@ -33,7 +42,8 @@ if ~isSparse
     n=max(n,nt);
 end
 
-m=size(x,1);
+[m,n]=size(x);
+o=ones(1,m);
 %{
 %------------------------------------------------------
 % min h + c1*sum(qi) + c2*sum(etai)
@@ -55,13 +65,13 @@ cvx_end
 disp('original primal');
 toc
 w1primal=w;
-b1primal=b;
+b1primal=b
 h1primal=h;
 
 pred1=sign(xt*w1primal+b1primal);
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
-
+%}
 % ---------------------------------------------------------------------------
 % max sum(betai)
 % such that
@@ -85,11 +95,12 @@ cvx_end
 disp('original dual');
 toc
 h1dual=u;
-b1dual=-u1;
+b1dual=-u1
 w1dual=-u2;
 pred1=sign(xt*w1dual'+b1dual);
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
+acc=[acc;accuracy];
 %------------------------------------------------------
 % min 1/2* ||w||^2 + h + c1*sum(qi) + c2*sum(etai)
 % such that
@@ -109,29 +120,31 @@ cvx_begin
 cvx_end
 toc
 w2primal=w;
-b2primal=b;
+b2primal=b
 h2primal=h;
 
 pred1=sign(xt*w2primal+b2primal);
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
+acc=[acc;accuracy];
+Q=x*x';
 %}
-%{
+%%{
 %Q=x*x';
 % ---------------------------------------------------------------------------
-% max 1/2*sumationij (betai-alphai)*yi*xi*xj'*yj*(betaj-alphaj) + sum(betai)
+% max -1/2*sumationij (betai-alphai)*yi*xi*xj'*yj*(betaj-alphaj) + sum(betai)
 % such that
 %     sum(alphai)=1
 %     sum((betai-alphai).*y)=0
 %     0<=beta<=c1
 %     0<=alpha<=c2
 %
-%{
+%%{
 tic
 cvx_begin
     variables a(m) be(m);
     dual variables u u1;
-    maximize(-0.5*quad_form(y.*(be-a),Q)+o*be);
+    minimize(0.5*quad_form(y.*(be-a),Q)-o*be);
     subject to
         u:sum(a)==1;
         u1:sum((be-a).*y)==0;
@@ -139,14 +152,19 @@ cvx_begin
         0<=a<=c2;
 cvx_end
 toc
-w2dual=((be-a).*y)'*x
-b2dual=u1
+be(abs(be-a) < 1e-6) = 0;
+a(abs(be-a) < 1e-6) = 0;
+w2dual=((be-a).*y)'*x;
+b2dual=-u1
+NSV=nnz(be-a)
 pred1=sign(xt*w2dual'+b2dual);
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt);
+nSV=[nSV;NSV];
+acc=[acc;accuracy];
 sum(a);
-Gbeta=Q*(be-a)-1;
-Galfa=-Q*(be-a);
+% Gbeta=Q*(be-a)-1;
+% Galfa=-Q*(be-a);
 % [Galfa,Gbeta]
 % r=repmat(y,1,n).*x;
 % Q=r*r';
@@ -160,20 +178,29 @@ Galfa=-Q*(be-a);
 % gb
 %}
 %}
-%{
+tic
 %-------------------- Equivalent Form ------------------%
 cvx_begin
     variables a1(m) de(m);
     dual variables u u1;
-    maximize(-0.5*quad_form(y.*(de),Q)+o*(de + a1))
+    maximize(-0.5*quad_form(y.*(de),Q)+o*(de))
     subject to
         u:sum(a1)==1;
         u1:sum((de).*y)==0;
         0<=de + a1<= c1;
         0<=a1<=c2;
 cvx_end
-w2=(de.*y)'*x
-sum(a1)
+toc
+de(abs(de) < 1e-6) = 0;
+w2=(de.*y)'*x;
+nsv=nnz(de)
+min(abs(de))
+b2=-u1
+pred1=sign(xt*w2'+b2);
+correct = sum((pred1-yt)== 0);
+accuracy = correct*100/length(yt)
+nSV=[nSV;nsv];
+acc=[acc;accuracy];
 %}
 %{
 x=[x,ones(m,1)];
@@ -203,14 +230,15 @@ cvx_end
 wmdualcvx=((be-a).*y)'*x
 %}
 xt=[xt,ones(size(xt,1),1)];
-%{
+%%{
 pred1=sign(xt*wmdualcvx');
+nsv=nnz(be-a)
 correct = sum((pred1-yt)== 0);
 accuracy = correct*100/length(yt)
 sum(a)
-%}
-%}
-
+%%}
+%%}
+%%{
 if ~isSparse
     x=[x,ones(m,1)];
     xt=[xt,ones(size(xt,1),1)];
@@ -266,7 +294,7 @@ toc
 %%{
 %lambda rule increase in lambda decrease the sum
 % lambda=17;
-
+%{
 if isSparse
     w=zeros(1,n+1);
     %w=(y.*(b1-a1))'*x;
@@ -471,7 +499,7 @@ while ~converge
 end
 
 wc=w
-%}
+
 end
 
 function [pred]=calculatePrediction(xt,w,m)
@@ -518,4 +546,7 @@ function [delw]=CalculateChangesinW(delb,dela,y,x,ind,n)
     
     delw(n)=(delb-dela)*y;
     %(((b1(i)-b1old(i)-a1(i)+a1old(i))*y(i))*x(i,:))
+end
+%}
+%}
 end

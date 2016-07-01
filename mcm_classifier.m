@@ -1,6 +1,6 @@
-function [ accuracy ] = mcm_classifier(x,y,xt,yt,C,kernel_option,cvxRun)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [ NSV,accuracy ] = mcm_classifier(x,y,xt,yt,C)
+%Basic MCM classifier you have to pass x=trainx , y = trainy ,xt=trainxt ,yt=trainyt and the value of c
+%It will return the number od SV and the accuracy 
 tic
 [m,n] = size(x);
 %{
@@ -12,17 +12,15 @@ for i = 1:n
 end
 %}
 % %Normailze the data
-% xm = mean(x);
-% xs = std(x);
-% xs(xs==0)=1;
+xm = mean(x);
+xs = std(x);
+xs(xs==0)=1;
 % 
-% x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
-% xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
+x=(x-repmat(xm,size(x,1),1))./repmat(xs,size(x,1),1);
+xt=(xt-repmat(xm,size(xt,1),1))./repmat(xs,size(xt,1),1);
 
 %kernel calculation
-if kernel_option == 1
 k=x*x';
-end
 disp('kernel calculated');
 
 %coefficients of valiables to be optimized
@@ -88,7 +86,7 @@ U = [zeros(m,1);ones(m,1)*-1];
 %size(U)
 disp('optimization starts');
 % Options for solving the MCM LP: we use the simplex method
-options=optimset('Largescale', 'off', 'dual-simplex', 'on');
+options=optimset('Largescale', 'off', 'simplex', 'on');
 %  [h   ;lambda        ;b   ;q         ]
 lb=[1   ;-inf*ones(m,1);-inf;zeros(m,1)];
 ub=+inf*ones(m+2+m,1);
@@ -111,56 +109,32 @@ q = g(n+3:size(g,1));
 pred = sign(xt*w +b);
 %}
 %%{
+toc
 lambda=g(2:m+1);
-lambda(lambda~=0);
 w=lambda'*x;
 b=g(m+2);
 %dlmwrite('mymcm.txt',g);
 
-nnz(lambda)
+NSV=nnz(lambda)
 %k= x*xt';
 nt=size(xt,2);
+w1=w;
 if n < nt
     xt=xt(:,1:n);
 elseif nt < n
     w1=[w(1:nt),w(n)];
 end
-%disp('kernel recalculated');
-%pred = sign(lambda'*k +b)';
-pred= sign(w1'*xt+b);
+disp('kernel recalculated');
+% pred = sign(lambda'*k +b)';
+size(w1)
+size(xt)
+pred= sign(w1*xt'+b)';
 %size(pred)
 %size(yt)
 %%}
 correct = sum((pred-yt)== 0);
 
-accuracy = correct/length(pred)
-
-if cvxRun==1
-    k=x*x';
-    cvx_begin
-        variables h l(m) b q(m);
-        minimize (h+C*sum(q));
-        subject to
-            q>=0;
-            y.*(l'*k)' + b*y + q <= h;
-            y.*(l'*k)' +b*y + q >=1;
-    cvx_end
-    b
-    h
-    lambda=l;
-    w=l'*x
-    nnz(lambda)
-    disp('cvx');
-    k=x*xt';
-    disp('kernel recalculated');
-    pred = sign(lambda'*k +b);
-    %size(pred)
-    %size(yt)
-    correct = sum((pred'-yt)== 0);
-    accuracy
-    accuracy = correct/length(pred)
-    pause(3);
-end
+accuracy = correct*100/length(pred)
 toc
 end
 

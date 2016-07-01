@@ -67,5 +67,5 @@ pred = sign(lambda'*k +b);
 %size(pred)
 correct = sum((pred'-classt)== 0);
 
-accuracy = correct/length(pred)
+accuracy = correct*100/length(pred)
 end

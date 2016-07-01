@@ -1,0 +1,9 @@
+data2=dlmread('webspamlvsnsv.dat');
+stem3(data2(:,1),data2(:,4),data2(:,2));
+zlim([min(data2(:,2))-1 max(data2(:,2))+1]);
+set(gca,'XScale','log');
+set(gca,'YScale','log');
+xlabel('lambda');
+ylabel('NSV');
+zlabel('accuracy');
+title('webspam dataset');

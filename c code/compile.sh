@@ -1,1 +1,1 @@
-g++ DCD1.cpp --std=c++11 -fpermissive -w -o dcd1
+g++ DCD1.cpp --std=c++11 -fpermissive -w -o dcd

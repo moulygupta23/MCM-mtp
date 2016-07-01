@@ -14,12 +14,12 @@ addpath('libsvm-3.20/matlab');
 c=1;
 
 if Issparse
-    datafiletrain = '../Data_ML/a9a.train';
-    datafiletest = '../Data_ML/a9a.test';
+%     datafiletrain = '../Data_ML/a9a.train';
+%     datafiletest = '../Data_ML/a9a.test';
     [y, x] = libsvmread(datafiletrain);
     disp('train data loaded into memory');
 
-    [yt, xt] = libsvmread(datafiletest);
+    [yt, xt] = libsvmread(datatest);
     disp('test data loaded into memory');
 
 else
@@ -45,7 +45,7 @@ model = svmtrain(y, x ,str);
 toc
 [predicted_label, accuracy, dv] = svmpredict(yt, xt, model);
 accuracy
-ac(1,2)=accuracy(1);
+acc=accuracy(1);
 %  ---------------
 %{
 x = [data.x1;data.x2;data.x3;data.x5];

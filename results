@@ -1,0 +1,430 @@
+Elapsed time is 1.102551 seconds.
+Elapsed time is 1.820649 seconds.
+Elapsed time is 2.442434 seconds.
+Elapsed time is 2.342229 seconds.
+Elapsed time is 1.176953 seconds.
+
+nsv =
+
+    85
+
+
+ans =
+
+     0
+
+
+b2 =
+
+    3.2195
+
+
+accuracy =
+
+   78.8732
+
+
+originaldual =
+
+   88.9300
+
+
+regprimal =
+
+   86.6428
+
+
+regdual =
+
+   86.6428
+
+
+ans =
+
+    96
+
+
+regdual2 =
+
+   86.6428
+
+
+ans =
+
+    96
+
+
+sonar
+
+Elapsed time is 0.585717 seconds.
+
+nsv =
+
+   102
+
+
+ans =
+
+     0
+
+
+b2 =
+
+    2.9079
+
+
+accuracy =
+
+   64.2857
+
+
+originaldual =
+
+   71.2143
+
+
+regprimal =
+
+   79.3810
+
+
+regdual =
+
+   79.3810
+
+
+ans =
+
+   118
+
+
+regdual2 =
+
+   79.3810
+
+
+ans =
+
+   118
+
+
+kohkiloyeh
+Elapsed time is 0.371738 seconds.
+
+nsv =
+
+    57
+
+
+ans =
+
+     0
+
+
+b2 =
+
+    0.5354
+
+
+accuracy =
+
+    65
+
+
+originaldual =
+
+    69
+
+
+regprimal =
+
+    66
+
+
+regdual =
+
+    70
+
+
+ans =
+
+    80
+
+
+regdual2 =
+
+    70
+
+
+ans =
+
+    80
+
+tae
+Elapsed time is 0.380870 seconds.
+
+nsv =
+
+   120
+
+
+ans =
+
+    0.0968
+
+
+b2 =
+
+   -3.0000
+
+
+accuracy =
+
+   70.9677
+
+
+originaldual =
+
+   67.0729
+
+
+regprimal =
+
+   66.3321
+
+
+regdual =
+
+   66.3321
+
+
+ans =
+
+   124
+
+
+regdual2 =
+
+   66.3321
+
+
+ans =
+
+   124
+
+bupa
+Elapsed time is 0.930253 seconds.
+
+nsv =
+
+   273
+
+
+ans =
+
+     0
+
+
+b2 =
+
+   -7.5608
+
+
+accuracy =
+
+   62.3188
+
+
+originaldual =
+
+   67.5362
+
+
+regprimal =
+
+   67.5362
+
+
+regdual =
+
+   67.8261
+
+
+ans =
+
+   276
+
+
+regdual2 =
+
+   67.5362
+
+
+ans =
+
+   274
+
+pima
+Elapsed time is 0.855918 seconds.
+
+nsv =
+
+   608
+
+
+ans =
+
+     0
+
+
+b2 =
+
+   -6.6533
+
+
+accuracy =
+
+   80.5195
+
+
+originaldual =
+
+   77.3462
+
+
+regprimal =
+
+   77.2163
+
+
+regdual =
+
+   34.9043
+
+
+ans =
+
+   616
+
+
+regdual2 =
+
+   53.4792
+
+
+ans =
+
+   616
+
+colon-cancer
+Elapsed time is 0.303754 seconds.
+
+nsv =
+
+    61
+
+
+ans =
+
+   2.3097e-05
+
+
+b2 =
+
+   -0.3047
+
+
+accuracy =
+
+   100
+
+
+originaldual =
+
+   36.7314
+
+
+regprimal =
+
+   81.8906
+
+
+regdual =
+
+   81.2081
+
+
+ans =
+
+    61
+
+
+regdual2 =
+
+   81.5077
+
+
+ans =
+
+    61
+
+
+rac
+originaldual =
+
+     0
+
+
+regprimal =
+
+   54.5455
+
+
+regdual =
+
+   30.3030
+
+
+ans =
+
+    32
+
+
+regdual2 =
+
+   54.5455
+
+
+ans =
+
+    29
+
+raoa
+originaldual =
+
+     0
+
+
+regprimal =
+
+   70.9677
+
+
+regdual =
+
+   51.6129
+
+
+ans =
+
+    30
+
+
+regdual2 =
+
+   70.9677
+
+
+ans =
+
+    28   
